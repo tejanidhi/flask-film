@@ -57,12 +57,21 @@ class UserDetails:
         film_details_list = []
         try:
             film_details_list = []
-            for x in self.film_collec.find():
+            film_id_json, api_status = MongoUtility().check_api_key(header_api_key, "mydatabase",
+                                                        "user_purchase_details")
+            for x in self.myclient["mydatabase"]["film_details"].find():
                 del x["_id"]
+                if film_id_json:
+                    if x["filmId"] in film_id_json["filmId"]:
+                        x["isPurchased"] = True
+                    else:
+                        x["isPurchased"] = False
+                else:
+                    x["isPurchased"] = False
                 film_details_list.append(x)
-            for x in self.mycol.find():
+            for x in self.myclient["mydatabase"]["user_data"].find():
                 api_key_list.append(x["api_key"])
-            if header_api_key not in api_key_list:
+            if header_api_key not in api_key_list or len(film_details_list) == 0:
                 return message, 404
         except Exception as e:
             print(e)
