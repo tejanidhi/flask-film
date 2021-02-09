@@ -1,6 +1,6 @@
 import pymongo
 from flask_api import status
-from flask import jsonify, Response
+from flask import jsonify
 import secrets
 from scripts.utils.MongoUtility import MongoUtility
 
@@ -80,16 +80,16 @@ class UserDetails:
                 if status:
                     new_message = {"api_key": message["api_key"]}
                     status_message = {"message": "No film exists"}
-                    if input_json["filmid"] in film_ids_list:
+                    if input_json["filmId"] in film_ids_list:
                         response_status = 200
                         status_message = {"message": "already purchased"}
-                        if input_json["filmid"] not in message["filmid"]:
-                            message["filmid"].append(input_json["filmid"])
+                        if input_json["filmId"] not in message["filmId"]:
+                            message["filmId"].append(input_json["filmId"])
                             self.pur_details.update(new_message, message)
                             status_message["message"] = "User Exists, added film"
                 else:
-                    if input_json["filmid"] in film_ids_list:
-                        input_json["filmid"] = [input_json["filmid"]]
+                    if input_json["filmId"] in film_ids_list:
+                        input_json["filmId"] = [input_json["filmId"]]
                         input_json["api_key"] = header_api
                         self.pur_details.insert_one(input_json)
                         status_message["message"] = "User Created"
@@ -105,7 +105,7 @@ class UserDetails:
         try:
             for x in self.myclient[database_name] \
                     [collection_name].find():
-                film_ids.append(x["filmid"])
+                film_ids.append(x["filmId"])
         except Exception as e:
             print(e)
         return film_ids
