@@ -53,3 +53,18 @@ def purchase_details():
         except Exception as e:
             print(e)
         return jsonify(message), status
+
+
+@user_data_status.route("/purchasedFilms", methods=["GET"])
+def get_purchased_films():
+    final_json = {"message": "Error in Fetching"}
+    status_code = 404
+    header_api = None
+    if request.method == "GET":
+        try:
+            if request.args['api_key']:
+                header_api = request.args['api_key']
+            final_json, status_code = UserDetails().get_purchased_films_list(header_api)
+        except Exception as e:
+            print(e)
+        return jsonify(final_json), status_code

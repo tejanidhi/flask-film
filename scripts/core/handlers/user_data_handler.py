@@ -58,7 +58,7 @@ class UserDetails:
         try:
             film_details_list = []
             film_id_json, api_status = MongoUtility().check_api_key(header_api_key, "mydatabase",
-                                                        "user_purchase_details")
+                                                                    "user_purchase_details")
             for x in self.myclient["mydatabase"]["film_details"].find():
                 del x["_id"]
                 if film_id_json:
@@ -127,3 +127,18 @@ class UserDetails:
         except Exception as e:
             print(e)
         return api_key_list
+
+    def get_purchased_films_list(self, header_api):
+        new_films_list = []
+        message = {"message": "No films purcahsed"}
+        try:
+            films_list, status = self.get_film_details(header_api)
+            if len(films_list) > 0:
+                for each_value in films_list:
+                    if each_value["isPurchased"]:
+                        new_films_list.append(each_value)
+            if not new_films_list:
+                return message, 404
+        except Exception as e:
+            print(e)
+        return new_films_list, 200
