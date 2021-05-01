@@ -175,3 +175,16 @@ class UserDetails:
         except Exception as e:
             print(e)
         return message, status
+
+    def get_user_details(self):
+        user_details_list = []
+        try:
+            for x in self.mycol.find():
+                temp_dict = {}
+                temp_dict["phone_number"] = x["phone_number"]
+                temp_dict["id"] = str(x["_id"])
+                user_details_list.append(temp_dict)
+        except Exception as e:
+            print(e)
+        return user_details_list, 200
+

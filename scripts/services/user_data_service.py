@@ -1,6 +1,7 @@
 from flask import request, Blueprint, jsonify
 from scripts.core.handlers.user_data_handler import UserDetails
 import json
+from bson.objectid import ObjectId
 
 user_data_status = Blueprint("user_data_status", __name__)
 
@@ -83,3 +84,15 @@ def add_film_details():
         except Exception as e:
             print(e)
         return jsonify(message), status
+
+
+@user_data_status.route("/users", methods=["GET"])
+def get_users():
+    final_json = {"message": "Error in Fetching"}
+    status_code = 404
+    if request.method == "GET":
+        try:
+            final_json, status_code = UserDetails().get_user_details()
+        except Exception as e:
+            print(e)
+        return jsonify(final_json), status_code
