@@ -119,6 +119,16 @@ class UserDetails:
             print(e)
         return film_ids
 
+    def get_film_names(self, database_name, collection_name):
+        film_names = list()
+        try:
+            for x in self.myclient[database_name] \
+                    [collection_name].find():
+                film_names.append(x["name"])
+        except Exception as e:
+            print(e)
+        return film_names
+
     def get_api_key_list(self, database_name, collection_name):
         api_key_list = []
         try:
@@ -147,13 +157,14 @@ class UserDetails:
         message = ""
         status = 404
         try:
-            film_id = input_json["filmId"]
-            film_ids_list = self.get_film_ids("mydatabase", "film_details")
-            if film_id not in film_ids_list:
-                if "cast" in input_json and "desc" in input_json and "filmId" in input_json\
-                        and "genre" in input_json and "image" in input_json and "isPurchased" \
-                        in input_json and "name" in input_json and "price" in input_json and \
+            film_name = input_json["name"]
+            film_name_list = self.get_film_names("mydatabase", "film_details")
+            if film_name not in film_name_list:
+                if "cast" in input_json and "desc" in input_json \
+                        and "genre" in input_json and "image" in input_json and "name" in input_json and "price" in input_json and \
                         "url" in input_json:
+                    film_id = MongoUtility().get_sequence("messages")
+                    input_json["filmId"] = film_id
                     self.film_collec.insert_one(input_json)
                     message = "Film details Inserted Successfully"
                     status = 200
