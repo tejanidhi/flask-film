@@ -142,3 +142,25 @@ class UserDetails:
         except Exception as e:
             print(e)
         return new_films_list, 200
+
+    def insert_film_details(self, input_json):
+        message = ""
+        status = 404
+        try:
+            film_id = input_json["filmId"]
+            film_ids_list = self.get_film_ids("mydatabase", "film_details")
+            if film_id not in film_ids_list:
+                if "cast" in input_json and "desc" in input_json and "filmId" in input_json\
+                        and "genre" in input_json and "image" in input_json and "isPurchased" \
+                        in input_json and "name" in input_json and "price" in input_json and \
+                        "url" in input_json:
+                    self.film_collec.insert_one(input_json)
+                    message = "Film details Inserted Successfully"
+                    status = 200
+                else:
+                    message = "input data not sufficient"
+            else:
+                message = "Film already Exists"
+        except Exception as e:
+            print(e)
+        return message, status

@@ -68,3 +68,18 @@ def get_purchased_films():
         except Exception as e:
             print(e)
         return jsonify(final_json), status_code
+
+
+@user_data_status.route("/addFilm", methods=["POST"])
+def add_film_details():
+    status = 404
+    message = {"message": "Error"}
+    if request.method == "POST":
+        try:
+            json_string = request.get_data()
+            if json_string:
+                json_obj = json.loads(json_string)
+                message, status = UserDetails().insert_film_details(json_obj)
+        except Exception as e:
+            print(e)
+        return jsonify(message), status
