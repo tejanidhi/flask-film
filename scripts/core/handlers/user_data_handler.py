@@ -44,8 +44,9 @@ class UserDetails:
                     if not response:
                         break
                 input_data["api_key"] = api_key
+                ts = calendar.timegm(time.gmtime())
+                input_data["created_date"] = ts
                 self.mycol.insert_one(input_data)
-
                 status_code = status.HTTP_200_OK
                 message["message"] = "USER CREATED"
                 message["api_key"] = api_key
