@@ -16,11 +16,13 @@ class MongoUtility:
             for x in self.myclient[database_name] \
                     [collection_name].find({"api_key": api_key}):
                 if x:
-                    del x["_id"]
+                    # del x["_id"]
                     flag = True
-                    value = x
+                    # value = x
+                    value["id"] = x["id"]
         except Exception as e:
             print(e)
+        print(value, flag)
         return value, flag
 
     def insert_one(self, input_json):

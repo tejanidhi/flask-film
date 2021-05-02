@@ -59,15 +59,18 @@ class UserDetails:
             film_details_list = []
             film_id_json, api_status = MongoUtility().check_api_key(header_api_key, "mydatabase",
                                                                     "user_purchase_details")
+            # print(film_id_json, "--")
             for x in self.myclient["mydatabase"]["film_details"].find():
-                del x["_id"]
+                # del x["_id"]
                 if film_id_json:
-                    if x["filmId"] in film_id_json["filmId"]:
+                    if str(x["_id"]) in film_id_json["id"]:
                         x["isPurchased"] = True
                     else:
                         x["isPurchased"] = False
                 else:
                     x["isPurchased"] = False
+                x["id"] = str(x["_id"])
+                del x["_id"]
                 film_details_list.append(x)
             for x in self.myclient["mydatabase"]["user_data"].find():
                 api_key_list.append(x["api_key"])
@@ -83,30 +86,36 @@ class UserDetails:
         try:
             api_list = self.get_api_key_list("mydatabase", "user_data")
             film_ids_list = self.get_film_ids("mydatabase", "film_details")
+            final_json = {}
             if header_api in api_list:
                 message, status = MongoUtility().check_api_key(header_api, "mydatabase",
                                                                "user_purchase_details")
-                if status:
-                    new_message = {"api_key": message["api_key"]}
-                    status_message = {"message": "No film exists"}
-                    if input_json["filmId"] in film_ids_list:
-                        response_status = 200
-                        status_message = {"message": "already purchased"}
-                        if input_json["filmId"] not in message["filmId"]:
-                            message["filmId"].append(input_json["filmId"])
-                            self.pur_details.update(new_message, message)
+                if input_json["id"] in film_ids_list:
+                    if status:
+                        new_message = {"api_key": header_api}
+                        final_json["api_key"] = header_api
+                        if input_json["id"] in message["id"]:
+                            response_status = 200
+                            status_message = {"message": "already purchased"}
+                        elif input_json["id"] not in message["id"]:
+                            message["id"].append(input_json["id"])
+                            final_json["id"] = message["id"]
+                            self.pur_details.update(new_message, final_json)
                             status_message["message"] = "User Exists, added film"
+                    else:
+                        if input_json["id"] in film_ids_list:
+                            input_json["id"] = [input_json["id"]]
+                            input_json["api_key"] = header_api
+                            self.pur_details.insert_one(input_json)
+                            status_message["message"] = "User Created"
+                            response_status = 200
                 else:
-                    if input_json["filmId"] in film_ids_list:
-                        input_json["filmId"] = [input_json["filmId"]]
-                        input_json["api_key"] = header_api
-                        self.pur_details.insert_one(input_json)
-                        status_message["message"] = "User Created"
-                        response_status = 200
+                    status_message["message"] = "No Film Exists"
             else:
                 status_message["message"] = "Invalid api"
         except Exception as e:
             print(e)
+            print(status_message, response_status)
         return status_message, response_status
 
     def get_film_ids(self, database_name, collection_name):
@@ -114,7 +123,7 @@ class UserDetails:
         try:
             for x in self.myclient[database_name] \
                     [collection_name].find():
-                film_ids.append(x["filmId"])
+                film_ids.append(str(x["_id"]))
         except Exception as e:
             print(e)
         return film_ids
@@ -163,8 +172,6 @@ class UserDetails:
                 if "cast" in input_json and "desc" in input_json \
                         and "genre" in input_json and "image" in input_json and "name" in input_json and "price" in input_json and \
                         "url" in input_json:
-                    film_id = MongoUtility().get_sequence("messages")
-                    input_json["filmId"] = film_id
                     self.film_collec.insert_one(input_json)
                     message = "Film details Inserted Successfully"
                     status = 200
@@ -187,4 +194,3 @@ class UserDetails:
         except Exception as e:
             print(e)
         return user_details_list, 200
-
