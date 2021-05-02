@@ -3,6 +3,8 @@ from flask_api import status
 from flask import jsonify
 import secrets
 from scripts.utils.MongoUtility import MongoUtility
+import calendar
+import time
 
 
 class UserDetails:
@@ -172,6 +174,8 @@ class UserDetails:
                 if "cast" in input_json and "desc" in input_json \
                         and "genre" in input_json and "image" in input_json and "name" in input_json and "price" in input_json and \
                         "url" in input_json:
+                    ts = calendar.timegm(time.gmtime())
+                    input_json["created_date"] = ts
                     self.film_collec.insert_one(input_json)
                     message = "Film details Inserted Successfully"
                     status = 200
