@@ -194,3 +194,17 @@ class UserDetails:
         except Exception as e:
             print(e)
         return user_details_list, 200
+
+    def get_purchased_user_details(self):
+        user_purchase_details_list = []
+        try:
+            for x in self.mycol.find():
+                temp_dict = {"phone_number": x["phone_number"], "id": str(x["_id"])}
+                film_id_json, api_status = MongoUtility().check_api_key(x["api_key"], "mydatabase",
+                                                                        "user_purchase_details")
+                if api_status and film_id_json:
+                    temp_dict["purchased_films"] = film_id_json["id"]
+                user_purchase_details_list.append(temp_dict)
+        except Exception as e:
+            print(e)
+        return user_purchase_details_list, 200

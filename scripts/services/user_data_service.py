@@ -96,3 +96,15 @@ def get_users():
         except Exception as e:
             print(e)
         return jsonify(final_json), status_code
+
+
+@user_data_status.route("/users/purchasedFilms", methods=["GET"])
+def get_purchased_users():
+    final_json = {"message": "Error in Fetching"}
+    status_code = 404
+    if request.method == "GET":
+        try:
+            final_json, status_code = UserDetails().get_purchased_user_details()
+        except Exception as e:
+            print(e)
+        return jsonify(final_json), status_code
