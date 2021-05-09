@@ -195,6 +195,7 @@ class UserDetails:
                 temp_dict = {}
                 temp_dict["phone_number"] = x["phone_number"]
                 temp_dict["id"] = str(x["_id"])
+                temp_dict["created_date"] = x["created_date"]
                 user_details_list.append(temp_dict)
         except Exception as e:
             print(e)
