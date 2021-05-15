@@ -21,7 +21,7 @@ class UserDetails:
         message = {"message": "Invalid Mobile Number"}
         status_code = status.HTTP_400_BAD_REQUEST
         number_not_found = False
-        input_format = False
+        input_format =  False
         try:
             if not input_data:
                 message = "Error, Enter value"
