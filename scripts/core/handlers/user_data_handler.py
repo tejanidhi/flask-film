@@ -5,6 +5,7 @@ import secrets
 from scripts.utils.MongoUtility import MongoUtility
 import calendar
 import time
+from bson.objectid import ObjectId
 
 
 class UserDetails:
@@ -214,3 +215,41 @@ class UserDetails:
         except Exception as e:
             print(e)
         return user_purchase_details_list, 200
+
+    def delete_film_details(self, input_json):
+        message = {"message": "No Film Exists"}
+        status = 200
+        try:
+            id = input_json["id"]
+            for x in self.film_collec.find({"_id": ObjectId(id)}):
+                if x:
+                    self.film_collec.delete_one({"_id": ObjectId(id)})
+                    message["message"] = "Deleted Succesfully"
+                    status = 200
+        except Exception as e:
+            print(e)
+        return message, status
+
+    def edit_film_details(self, input_json):
+        message = {"message": "No Film Exists"}
+        status = 200
+        try:
+            id = input_json["id"]
+            if "cast" in input_json and "desc" in input_json \
+                    and "genre" in input_json and "image" in input_json and "name" in input_json and "price" in input_json and \
+                    "url" in input_json and "created_date" in input_json:
+                for x in self.film_collec.find({"_id": ObjectId(id)}):
+                    if x:
+                        del input_json["id"]
+                        self.film_collec.update(x, input_json)
+                        message["message"] = "Edited Succesfully"
+                        status = 200
+            else:
+                message["message"] = "Invalid Input"
+                status = 404
+        except Exception as e:
+            print(e)
+        return message, status
+
+
+

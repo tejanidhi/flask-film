@@ -108,3 +108,33 @@ def get_purchased_users():
         except Exception as e:
             print(e)
         return jsonify(final_json), status_code
+
+
+@user_data_status.route("/deleteFilm", methods=["POST"])
+def delete_film_details():
+    status = 404
+    message = {"message": "Error"}
+    if request.method == "POST":
+        try:
+            json_string = request.get_data()
+            if json_string:
+                json_obj = json.loads(json_string)
+                message, status = UserDetails().delete_film_details(json_obj)
+        except Exception as e:
+            print(e)
+        return jsonify(message), status
+
+
+@user_data_status.route("/editFilm", methods=["POST"])
+def edit_film_details():
+    status = 404
+    message = {"message": "Error"}
+    if request.method == "POST":
+        try:
+            json_string = request.get_data()
+            if json_string:
+                json_obj = json.loads(json_string)
+                message, status = UserDetails().edit_film_details(json_obj)
+        except Exception as e:
+            print(e)
+        return jsonify(message), status
