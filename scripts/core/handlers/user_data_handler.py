@@ -234,8 +234,10 @@ class UserDetails:
         message = {"message": "No Film Exists"}
         status = 200
         try:
-            id = input_json["id"]
-            if "cast" in input_json and "desc" in input_json \
+            id = None
+            if "id" in input_json:
+                id = input_json["id"]
+            if "id" in input_json and "cast" in input_json and "desc" in input_json \
                     and "genre" in input_json and "image" in input_json and "name" in input_json and "price" in input_json and \
                     "url" in input_json and "created_date" in input_json:
                 for x in self.film_collec.find({"_id": ObjectId(id)}):
