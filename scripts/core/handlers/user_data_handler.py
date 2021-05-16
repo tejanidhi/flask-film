@@ -8,7 +8,7 @@ import time
 from bson.objectid import ObjectId
 import boto3
 from boto3.s3.transfer import S3Transfer
-import glob
+import os
 from PIL import Image
 
 
@@ -274,6 +274,7 @@ class UserDetails:
                 print(e)
             url = "https://%s.s3.ap-south-1.amazonaws.com/%s" % (bucket, imagefile.filename)
             ts = calendar.timegm(time.gmtime())
+            os.remove(f'images/{imagefile.filename}')
             final_json['url'] = url
             final_json['created_date'] = ts
             self.update_coll.insert_one(final_json)
