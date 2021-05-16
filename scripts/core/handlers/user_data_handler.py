@@ -6,6 +6,10 @@ from scripts.utils.MongoUtility import MongoUtility
 import calendar
 import time
 from bson.objectid import ObjectId
+import boto3
+from boto3.s3.transfer import S3Transfer
+import glob
+from PIL import Image
 
 
 class UserDetails:
@@ -17,12 +21,13 @@ class UserDetails:
         self.mycol = self.mydb["user_data"]
         self.pur_details = self.mydb["user_purchase_details"]
         self.film_collec = self.mydb["film_details"]
+        self.update_coll = self.mydb["updates"]
 
     def add_user_handler(self, input_data):
         message = {"message": "Invalid Mobile Number"}
         status_code = status.HTTP_400_BAD_REQUEST
         number_not_found = False
-        input_format =  False
+        input_format = False
         try:
             if not input_data:
                 message = "Error, Enter value"
@@ -253,5 +258,28 @@ class UserDetails:
             print(e)
         return message, status
 
-
-
+    def add_update(self, imagefile):
+        message = {'message': "Upload failed"}
+        status = 404
+        final_json = {}
+        try:
+            transfer = S3Transfer(boto3.client('s3',
+                                               aws_access_key_id='AKIAVWWSCFPVLSPN3W7W',
+                                               aws_secret_access_key='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'))
+            bucket = 'filmnagar-images'
+            try:
+                transfer.upload_file(f'images/{imagefile.filename}', bucket, key=imagefile.filename,
+                                     extra_args={'ACL': 'public-read'})
+            except Exception as e:
+                print(e)
+            url = "https://%s.s3.ap-south-1.amazonaws.com/%s" % (bucket, imagefile.filename)
+            ts = calendar.timegm(time.gmtime())
+            final_json['url'] = url
+            final_json['created_date'] = ts
+            self.update_coll.insert_one(final_json)
+            status = 200
+            message['message'] = 'Updated added successfully'
+            message['url'] = url
+        except Exception as e:
+            print(e)
+        return message, status

@@ -1,7 +1,11 @@
 from flask import request, Blueprint, jsonify
 from scripts.core.handlers.user_data_handler import UserDetails
 import json
+from werkzeug.datastructures import FileStorage
+import os
 from bson.objectid import ObjectId
+from PIL import Image
+import glob
 
 user_data_status = Blueprint("user_data_status", __name__)
 
@@ -135,6 +139,22 @@ def edit_film_details():
             if json_string:
                 json_obj = json.loads(json_string)
                 message, status = UserDetails().edit_film_details(json_obj)
+        except Exception as e:
+            print(e)
+        return jsonify(message), status
+
+
+@user_data_status.route("/addUpdate", methods=["POST"])
+def add_update():
+    status = 404
+    message = {"message": "Error"}
+    imagefile = None
+    if request.method == "POST":
+        try:
+            if 'imagefile' in request.files:
+                imagefile = request.files.get('imagefile', '')
+            imagefile.save(f'images/{imagefile.filename}')
+            message, status = UserDetails().add_update(imagefile)
         except Exception as e:
             print(e)
         return jsonify(message), status
