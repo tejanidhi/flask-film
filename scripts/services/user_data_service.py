@@ -158,3 +158,31 @@ def add_update():
         except Exception as e:
             print(e)
         return jsonify(message), status
+
+
+@user_data_status.route("/getUpdates", methods=["GET"])
+def get_updates():
+    final_json = {"message": "Error in Fetching"}
+    status_code = 404
+    if request.method == "GET":
+        try:
+            final_json, status_code = UserDetails().get_updates()
+        except Exception as e:
+            print(e)
+        return jsonify(final_json), status_code
+
+
+@user_data_status.route("/deleteUpdate", methods=["POST"])
+def delete_update():
+    status = 404
+    message = {"message": "Error"}
+    if request.method == "POST":
+        try:
+            json_string = request.get_data()
+            if json_string:
+                json_obj = json.loads(json_string)
+                message, status = UserDetails().delete_update(json_obj)
+        except Exception as e:
+            print(e)
+        return jsonify(message), status
+

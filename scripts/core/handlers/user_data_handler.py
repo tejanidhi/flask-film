@@ -22,6 +22,7 @@ class UserDetails:
         self.pur_details = self.mydb["user_purchase_details"]
         self.film_collec = self.mydb["film_details"]
         self.update_coll = self.mydb["updates"]
+        self.cast_coll = self.mydb["cast_details"]
 
     def add_user_handler(self, input_data):
         message = {"message": "Invalid Mobile Number"}
@@ -71,6 +72,17 @@ class UserDetails:
             # print(film_id_json, "--")
             for x in self.myclient["mydatabase"]["film_details"].find():
                 # del x["_id"]
+                cast_details_list = []
+                if x["cast_ids"]:
+                    for each_cast in x["cast_ids"]:
+                        cast_details_list = []
+                        for y in self.cast_coll.find({'_id': ObjectId(each_cast)}):
+                            del y["_id"]
+                            y["cast"]["id"] = each_cast
+                            cast_details_list.append(y["cast"])
+                x["cast_details"] = cast_details_list
+                del x["cast_ids"]
+                # print(film_id_json, str(x["_id"]))
                 if film_id_json:
                     if str(x["_id"]) in film_id_json["id"]:
                         x["isPurchased"] = True
@@ -158,7 +170,7 @@ class UserDetails:
 
     def get_purchased_films_list(self, header_api):
         new_films_list = []
-        message = {"message": "No films purcahsed"}
+        message = {"message": "No films purchased"}
         try:
             films_list, status = self.get_film_details(header_api)
             if len(films_list) > 0:
@@ -181,6 +193,11 @@ class UserDetails:
                 if "cast" in input_json and "desc" in input_json \
                         and "genre" in input_json and "image" in input_json and "name" in input_json and "price" in input_json and \
                         "url" in input_json:
+                    input_json["cast_ids"] = list()
+                    for each_cast in input_json["cast"]:
+                        get_id = self.cast_coll.insert_one(each_cast)
+                        input_json["cast_ids"].append(str(get_id.inserted_id))
+                    del input_json["cast"]
                     ts = calendar.timegm(time.gmtime())
                     input_json["created_date"] = ts
                     self.film_collec.insert_one(input_json)
@@ -268,13 +285,15 @@ class UserDetails:
                                                aws_secret_access_key='37UAJnetZl8wdOEE+r6bFg0DV+SdVVVlLTwHuHiu'))
             bucket = 'filmnagar-images'
             try:
-                transfer.upload_file(f'images/{imagefile.filename}', bucket, key=imagefile.filename,
+                transfer.upload_file(f'images/{imagefile.filename}', bucket,
+                                     key="updates" + "/" + imagefile.filename,
                                      extra_args={'ACL': 'public-read'})
             except Exception as e:
                 print(e)
-            url = "https://%s.s3.ap-south-1.amazonaws.com/%s" % (bucket, imagefile.filename)
+            url = "https://%s.s3.ap-south-1.amazonaws.com/%s" % (bucket, "updates" + "/" + imagefile.filename)
             ts = calendar.timegm(time.gmtime())
             os.remove(f'images/{imagefile.filename}')
+            final_json['image_name'] = imagefile.filename
             final_json['url'] = url
             final_json['created_date'] = ts
             self.update_coll.insert_one(final_json)
@@ -284,3 +303,41 @@ class UserDetails:
         except Exception as e:
             print(e)
         return message, status
+
+    def get_updates(self):
+        status_code = 404
+        message = {"message": "No Updates"}
+        output_list = []
+        try:
+            for x in self.update_coll.find():
+                del x["_id"]
+                output_list.append(x)
+            if not output_list:
+                return message, status_code
+        except Exception as e:
+            print(e)
+        return output_list, 200
+
+    def delete_update(self, input_json):
+        status_code = 404
+        message = {"message": "Error in Deleting"}
+        try:
+            delete_id = input_json["id"]
+            url_to_del = ""
+            for x in self.update_coll.find({"_id": ObjectId(delete_id)}):
+                url_to_del = x["image_name"]
+            if url_to_del:
+                self.update_coll.delete_one({'_id': ObjectId(delete_id)})
+                s3 = boto3.resource(
+                    service_name='s3',
+                    region_name='ap-south-1',
+                    aws_access_key_id='AKIAVWWSCFPVLSPN3W7W',
+                    aws_secret_access_key='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'
+                )
+                obj = s3.Object("filmnagar-images", key="updates" + "/" + url_to_del)
+                obj.delete()
+                status_code = 200
+                message["message"] = "Deleted Update"
+        except Exception as e:
+            print(e)
+        return message, status_code

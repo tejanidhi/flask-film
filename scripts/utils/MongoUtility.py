@@ -22,7 +22,6 @@ class MongoUtility:
                     value["id"] = x["id"]
         except Exception as e:
             print(e)
-        print(value, flag)
         return value, flag
 
     def insert_one(self, input_json):
