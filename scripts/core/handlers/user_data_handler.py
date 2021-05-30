@@ -255,22 +255,41 @@ class UserDetails:
     def edit_film_details(self, input_json):
         message = {"message": "No Film Exists"}
         status = 200
+        form_json = {}
         try:
             id = None
             if "id" in input_json:
                 id = input_json["id"]
-            if "id" in input_json and "cast" in input_json and "desc" in input_json \
-                    and "genre" in input_json and "image" in input_json and "name" in input_json and "price" in input_json and \
-                    "url" in input_json and "created_date" in input_json:
-                for x in self.film_collec.find({"_id": ObjectId(id)}):
-                    if x:
-                        del input_json["id"]
-                        self.film_collec.update(x, input_json)
-                        message["message"] = "Edited Succesfully"
-                        status = 200
-            else:
-                message["message"] = "Invalid Input"
-                status = 404
+            for x in self.film_collec.find({"_id": ObjectId(id)}):
+                if "desc" in input_json:
+                    form_json["desc"] = input_json["desc"]
+                else:
+                    form_json["desc"] = x["desc"]
+                if "genre" in input_json:
+                    form_json["genre"] = input_json["genre"]
+                else:
+                    form_json["genre"] = x["genre"]
+                if "image" in input_json:
+                    form_json["image"] = input_json["image"]
+                else:
+                    form_json["image"] = x["image"]
+                if "name" in input_json:
+                    form_json["name"] = input_json["name"]
+                else:
+                    form_json["name"] = x["name"]
+                if "price" in input_json:
+                    form_json["price"] = input_json["price"]
+                else:
+                    form_json["price"] = x["price"]
+                if "url" in input_json:
+                    form_json["url"] = input_json["url"]
+                else:
+                    form_json["url"] = x["url"]
+                form_json["created_date"] = x["created_date"]
+                form_json["cast_ids"] = x["cast_ids"]
+                self.film_collec.update(x, form_json)
+                message["message"] = "Edited Succesfully"
+                status = 200
         except Exception as e:
             print(e)
         return message, status
@@ -280,6 +299,7 @@ class UserDetails:
         status = 404
         final_json = {}
         try:
+            print(type(imagefile))
             transfer = S3Transfer(boto3.client('s3',
                                                aws_access_key_id='AKIAVWWSCFPVLSPN3W7W',
                                                aws_secret_access_key='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'))
@@ -338,6 +358,38 @@ class UserDetails:
                 obj.delete()
                 status_code = 200
                 message["message"] = "Deleted Update"
+        except Exception as e:
+            print(e)
+        return message, status_code
+
+    def add_cast_details(self, input_json):
+        out_json = {}
+        status_code = 404
+        message = {"message": "Error in Adding Cast"}
+        try:
+            if input_json["image"] and input_json["name"] and input_json["role"]:
+                out_json["image"] = input_json["image"]
+                out_json["name"] = input_json["name"]
+                out_json["role"] = input_json["role"]
+            if out_json:
+                self.cast_coll.insert_one(out_json)
+                message["message"] = "Added cast"
+                status_code = 200
+        except Exception as e:
+            print(e)
+        return message, status_code
+
+    def remove_cast_details(self, input_json):
+        get_id = ""
+        status_code = 404
+        message = {"message": "Error in Removing Cast"}
+        try:
+            if input_json["id"]:
+                get_id = input_json["id"]
+            if get_id:
+                self.cast_coll.delete_one({'_id': ObjectId(get_id)})
+                message["message"] = "Removed cast"
+                status_code = 200
         except Exception as e:
             print(e)
         return message, status_code

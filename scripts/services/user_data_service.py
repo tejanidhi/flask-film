@@ -186,3 +186,32 @@ def delete_update():
             print(e)
         return jsonify(message), status
 
+
+@user_data_status.route("/addCast", methods=["POST"])
+def add_cast_details():
+    status = 404
+    message = {"message": "Error"}
+    if request.method == "POST":
+        try:
+            json_string = request.get_data()
+            if json_string:
+                json_obj = json.loads(json_string)
+                message, status = UserDetails().add_cast_details(json_obj)
+        except Exception as e:
+            print(e)
+        return jsonify(message), status
+
+
+@user_data_status.route("/removeCast", methods=["POST"])
+def remove_cast_details():
+    status = 404
+    message = {"message": "Error"}
+    if request.method == "POST":
+        try:
+            json_string = request.get_data()
+            if json_string:
+                json_obj = json.loads(json_string)
+                message, status = UserDetails().remove_cast_details(json_obj)
+        except Exception as e:
+            print(e)
+        return jsonify(message), status
