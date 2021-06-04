@@ -367,14 +367,20 @@ class UserDetails:
         status_code = 404
         message = {"message": "Error in Adding Cast"}
         try:
-            if input_json["image"] and input_json["name"] and input_json["role"]:
+            if input_json["filmid"] and input_json["image"] and input_json["name"] and input_json["role"]:
                 out_json["image"] = input_json["image"]
                 out_json["name"] = input_json["name"]
                 out_json["role"] = input_json["role"]
-            if out_json:
-                self.cast_coll.insert_one(out_json)
-                message["message"] = "Added cast"
-                status_code = 200
+                if out_json:
+                    inserted_status = self.cast_coll.insert_one(out_json)
+                    get_ins_id = inserted_status.inserted_id
+                    for x in self.film_collec.find({"_id": ObjectId(input_json["filmid"])}):
+                        temp_cast_ids = x["cast_ids"]
+                        temp_cast_ids.append(str(get_ins_id))
+                        self.film_collec.update_one({"_id": ObjectId(input_json["filmid"])},
+                                                    {"$set": {"cast_ids": temp_cast_ids}})
+                        message["message"] = "cast Added"
+                        status_code = 200
         except Exception as e:
             print(e)
         return message, status_code
@@ -387,9 +393,15 @@ class UserDetails:
             if input_json["id"]:
                 get_id = input_json["id"]
             if get_id:
-                self.cast_coll.delete_one({'_id': ObjectId(get_id)})
-                message["message"] = "Removed cast"
-                status_code = 200
+                for x in self.film_collec.find({"_id": ObjectId(input_json["filmid"])}):
+                    temp_cast_ids = x["cast_ids"]
+                    if get_id in temp_cast_ids:
+                        temp_cast_ids.remove(get_id)
+                        self.film_collec.update_one({"_id": ObjectId(input_json["filmid"])},
+                                                    {"$set": {"cast_ids": temp_cast_ids}})
+                        self.cast_coll.delete_one({'_id': ObjectId(get_id)})
+                        message["message"] = "cast Removed"
+                        status_code = 200
         except Exception as e:
             print(e)
         return message, status_code
