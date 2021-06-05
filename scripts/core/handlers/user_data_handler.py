@@ -410,7 +410,7 @@ class UserDetails:
     def insert_event_details(self, input_json, header_api):
         status_code = 404
         message = {"message": "Error in Inserting"}
-        out_json = {}
+        out_json = dict()
         try:
             if input_json["event_name"]:
                 out_json['event_name'] = input_json["event_name"]
