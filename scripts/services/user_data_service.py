@@ -215,3 +215,20 @@ def remove_cast_details():
         except Exception as e:
             print(e)
         return jsonify(message), status
+
+
+@user_data_status.route("/events", methods=["POST"])
+def event_details():
+    status = 404
+    message = {"message": "Error"}
+    if request.method == "POST":
+        try:
+            if request.args['api_key']:
+                header_api = request.args['api_key']
+                json_string = request.get_data()
+                if json_string:
+                    json_obj = json.loads(json_string)
+                    message, status = UserDetails().insert_event_details(json_obj, header_api)
+        except Exception as e:
+            print(e)
+        return jsonify(message), status

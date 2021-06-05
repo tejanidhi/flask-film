@@ -23,6 +23,7 @@ class UserDetails:
         self.film_collec = self.mydb["film_details"]
         self.update_coll = self.mydb["updates"]
         self.cast_coll = self.mydb["cast_details"]
+        self.events_coll = self.mydb["events"]
 
     def add_user_handler(self, input_data):
         message = {"message": "Invalid Mobile Number"}
@@ -402,6 +403,30 @@ class UserDetails:
                         self.cast_coll.delete_one({'_id': ObjectId(get_id)})
                         message["message"] = "cast Removed"
                         status_code = 200
+        except Exception as e:
+            print(e)
+        return message, status_code
+
+    def insert_event_details(self, input_json, header_api):
+        status_code = 404
+        message = {"message": "Error in Inserting"}
+        out_json = {}
+        try:
+            if input_json["event_name"]:
+                out_json['event_name'] = input_json["event_name"]
+            if input_json["filmid"]:
+                out_json['filmid'] = input_json["filmid"]
+            if input_json["param_2"]:
+                out_json['param_2'] = input_json["param_2"]
+            ts = calendar.timegm(time.gmtime())
+            out_json['created_date'] = ts
+            if header_api:
+                for x in self.mycol.find({"api_key": header_api}):
+                    out_json["userid"] = str(x["_id"])
+            if out_json:
+                self.events_coll.insert_one(out_json)
+                status_code = 200
+                message["message"] = "Inserted successfully"
         except Exception as e:
             print(e)
         return message, status_code
