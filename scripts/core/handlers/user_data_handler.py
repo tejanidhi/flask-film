@@ -412,21 +412,25 @@ class UserDetails:
         message = {"message": "Error in Inserting"}
         out_json = dict()
         try:
-            if input_json["event_name"]:
-                out_json['event_name'] = input_json["event_name"]
-            if input_json["filmid"]:
-                out_json['filmid'] = input_json["filmid"]
-            if input_json["param_2"]:
-                out_json['param_2'] = input_json["param_2"]
-            ts = calendar.timegm(time.gmtime())
-            out_json['created_date'] = ts
-            if header_api:
-                for x in self.mycol.find({"api_key": header_api}):
-                    out_json["userid"] = str(x["_id"])
-            if out_json:
-                self.events_coll.insert_one(out_json)
-                status_code = 200
-                message["message"] = "Inserted successfully"
+            if input_json["event_name"] == "PLAY_CLICKED" or input_json["event_name"] == "FILM_CLICKED" \
+                    or input_json["event_name"] == "BUY_CLICKED":
+                if input_json["event_name"]:
+                    out_json['event_name'] = input_json["event_name"]
+                if input_json["param1"]:
+                    out_json['param1'] = input_json["param1"]
+                if input_json["param2"]:
+                    out_json['param2'] = input_json["param2"]
+                ts = calendar.timegm(time.gmtime())
+                out_json['created_date'] = ts
+                if header_api:
+                    for x in self.mycol.find({"api_key": header_api}):
+                        out_json["userid"] = str(x["_id"])
+                if out_json:
+                    self.events_coll.insert_one(out_json)
+                    status_code = 200
+                    message["message"] = "Inserted successfully"
+            else:
+                message["message"] = "No such event"
         except Exception as e:
             print(e)
         return message, status_code
