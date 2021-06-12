@@ -234,7 +234,7 @@ def event_details():
         return jsonify(message), status
 
 
-@user_data_status.route("/films/purchased", methods=["GET"])
+@user_data_status.route("/films/published", methods=["GET"])
 def get_published_films():
     final_json = {"message": "Error in Fetching"}
     status_code = 404
@@ -249,8 +249,8 @@ def get_published_films():
         return jsonify(final_json), status_code
 
 
-@user_data_status.route("/addPublishedFilm", methods=["POST"])
-def add_published_film():
+@user_data_status.route("/films/published/change", methods=["POST"])
+def publish_unpublish_film():
     status = 404
     message = {"message": "Error"}
     if request.method == "POST":
@@ -258,22 +258,10 @@ def add_published_film():
             json_string = request.get_data()
             if json_string:
                 json_obj = json.loads(json_string)
-                message, status = UserDetails().add_published_film(json_obj)
+                message, status = UserDetails().publish_unpublish_film(json_obj)
         except Exception as e:
             print(e)
         return jsonify(message), status
 
 
-@user_data_status.route("/unpublishFilm", methods=["POST"])
-def unpublish_film():
-    status = 404
-    message = {"message": "Error"}
-    if request.method == "POST":
-        try:
-            json_string = request.get_data()
-            if json_string:
-                json_obj = json.loads(json_string)
-                message, status = UserDetails().unpublish_film(json_obj)
-        except Exception as e:
-            print(e)
-        return jsonify(message), status
+
