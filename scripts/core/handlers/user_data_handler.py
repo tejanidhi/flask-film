@@ -78,9 +78,9 @@ class UserDetails:
                     for each_cast in x["cast_ids"]:
                         cast_details_list = []
                         for y in self.cast_coll.find({'_id': ObjectId(each_cast)}):
+                            y["id"] = str(y["_id"])
                             del y["_id"]
-                            y["cast"]["id"] = each_cast
-                            cast_details_list.append(y["cast"])
+                            cast_details_list.append(y)
                 x["cast_details"] = cast_details_list
                 del x["cast_ids"]
                 # print(film_id_json, str(x["_id"]))
@@ -91,6 +91,8 @@ class UserDetails:
                         x["isPurchased"] = False
                 else:
                     x["isPurchased"] = False
+                if "isPublished" not in x:
+                    x["isPublished"] = False
                 x["id"] = str(x["_id"])
                 del x["_id"]
                 film_details_list.append(x)
@@ -431,6 +433,49 @@ class UserDetails:
                     message["message"] = "Inserted successfully"
             else:
                 message["message"] = "No such event"
+        except Exception as e:
+            print(e)
+        return message, status_code
+
+    def get_published_films(self, header_api):
+        get_films_list = []
+        message = {"message": "No published films"}
+        status_code = 404
+        flag = False
+        try:
+            get_films_list, status_code = self.get_film_details(header_api)
+            if "isPublished" in get_films_list[0]:
+                if get_films_list[0]["isPublished"]:
+                    flag = True
+            if not flag:
+                return message, status_code
+        except Exception as e:
+            print(e)
+        return get_films_list, 200
+
+    def add_published_film(self, input_json):
+        message = {"message": "Error in publishing"}
+        status_code = 404
+        try:
+            if input_json["filmid"]:
+                # for x in self.film_collec.find({"_id": ObjectId(input_json["filmid"])}):
+                self.film_collec.update_one({"_id": ObjectId(input_json["filmid"])},
+                                            {"$set": {"isPublished": True}})
+                message["message"] = "Published Film"
+                status_code = 200
+        except Exception as e:
+            print(e)
+        return message, status_code
+
+    def unpublish_film(self, input_json):
+        message = {"message": "Error in unpublishing"}
+        status_code = 404
+        try:
+            if input_json["filmid"]:
+                self.film_collec.update_one({"_id": ObjectId(input_json["filmid"])},
+                                            {"$set": {"isPublished": False}})
+                message["message"] = "unpublished Film"
+                status_code = 200
         except Exception as e:
             print(e)
         return message, status_code
