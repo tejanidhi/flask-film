@@ -9,6 +9,7 @@ from bson.objectid import ObjectId
 import boto3
 from boto3.s3.transfer import S3Transfer
 import os
+import uuid
 from PIL import Image
 
 
@@ -24,6 +25,8 @@ class UserDetails:
         self.update_coll = self.mydb["updates"]
         self.cast_coll = self.mydb["cast_details"]
         self.events_coll = self.mydb["events"]
+        self.series_coll = self.mydb["series"]
+        self.unique_id_list = []
 
     def add_user_handler(self, input_data):
         message = {"message": "Invalid Mobile Number"}
@@ -451,10 +454,10 @@ class UserDetails:
                 return message, status_code
         except Exception as e:
             print(e)
-        return get_films_list, 200
+        return get_films_list, status_code
 
     def publish_unpublish_film(self, input_json):
-        message = {"message": "Error in publishing"}
+        message = {"message": "Error in publishing Film"}
         status_code = 404
         try:
             if "filmid" in input_json and "isPublished" in input_json:
@@ -469,4 +472,155 @@ class UserDetails:
             print(e)
         return message, status_code
 
+    def add_series(self, input_json):
+        message = {"message": "Error in adding series"}
+        status_code = 404
+        out_json = {}
+        episodes_list = []
+        try:
+            if "series" in input_json:
+                out_json["series"] = input_json["series"]
+            if "image" in input_json:
+                out_json["image"] = input_json["image"]
+            ts = calendar.timegm(time.gmtime())
+            out_json["created_date"] = ts
+            if "episodes" in input_json:
+                for each_value in input_json["episodes"]:
+                    get_uuid = self.create_unique_uuid(self.unique_id_list)
+                    if get_uuid:
+                        # print(get_uuid)
+                        temp_json = {"episode_name": each_value, "id": get_uuid}
+                        episodes_list.append(temp_json)
+            out_json["episodes"] = episodes_list
+            if out_json:
+                self.series_coll.insert_one(out_json)
+                message["message"] = "Added series"
+                status_code = 200
+        except Exception as e:
+            print(e)
+        return message, status_code
 
+    def create_unique_uuid(self, unique_id_list):
+        get_uuid = ""
+        try:
+            while True:
+                get_uuid = str(uuid.uuid1())
+                if get_uuid not in unique_id_list:
+                    unique_id_list.append(get_uuid)
+                    break
+                else:
+                    continue
+        except Exception as e:
+            print(e)
+        return get_uuid
+
+    def get_series(self):
+        message = {"message": "Added series"}
+        status_code = 404
+        output_list = []
+        try:
+            for x in self.series_coll.find():
+                temp_id = str(x["_id"])
+                del x["_id"]
+                x["sid"] = temp_id
+                if not x["episodes"]:
+                    del x["episodes"]
+                output_list.append(x)
+            if output_list:
+                message["message"] = "Added series"
+                status_code = 200
+            else:
+                return message, status_code
+        except Exception as e:
+            print(e)
+        return output_list, status_code
+
+    def add_episode(self, input_json):
+        id_list = []
+        message = {"message": "Error in adding episode"}
+        status_code = 404
+        try:
+            if "sid" in input_json and "episode_name" in input_json:
+                for x in self.series_coll.find({"_id": ObjectId(input_json["sid"])}):
+                    for each_value in x["episodes"]:
+                        id_list.append(each_value["id"])
+                    get_uuid = self.create_unique_uuid(id_list)
+                    if get_uuid:
+                        ts = calendar.timegm(time.gmtime())
+                        temp_json = {"episode_name": input_json["episode_name"], "id": get_uuid,
+                                     "created_date": ts}
+                        x["episodes"].append(temp_json)
+                        # print(x["episodes"])
+                        self.series_coll.update_one({"_id": ObjectId(input_json["sid"])},
+                                                    {"$set": {"episodes": x["episodes"]}})
+                        message["message"] = "Added Episode"
+                        status_code = 200
+        except Exception as e:
+            print(e)
+        return message, status_code
+
+    def remove_episode(self, input_json):
+        message = {"message": "Error in removing episode"}
+        status_code = 404
+        try:
+            if "eid" in input_json and "sid" in input_json:
+                for x in self.series_coll.find({"_id": ObjectId(input_json["sid"])}):
+                    for each_document in x["episodes"]:
+                        if each_document["id"] == input_json["eid"]:
+                            x["episodes"].remove(each_document)
+                            self.series_coll.update_one({"_id": ObjectId(input_json["sid"])},
+                                                        {"$set": {"episodes": x["episodes"]}})
+                            message["message"] = "Removed Episode"
+                            status_code = 200
+        except Exception as e:
+            print(e)
+        return message, status_code
+
+    def remove_series(self, input_json):
+        message = {"message": "Error in removing series"}
+        status_code = 404
+        try:
+            if "sid" in input_json:
+                self.series_coll.delete_one({"_id": ObjectId(input_json["sid"])})
+                message["message"] = "Removed Series"
+                status_code = 200
+        except Exception as e:
+            print(e)
+        return message, status_code
+
+    def publish_unpublish_series(self, input_json):
+        message = {"message": "Error in publishing Series"}
+        status_code = 404
+        try:
+            if "sid" in input_json and "isPublished" in input_json:
+                self.film_collec.update_one({"_id": ObjectId(input_json["sid"])},
+                                            {"$set": {"isPublished": input_json["isPublished"]}})
+            if input_json["isPublished"]:
+                message["message"] = "Published Film"
+            else:
+                message["message"] = "Unpublished Film"
+                status_code = 200
+        except Exception as e:
+            print(e)
+        return message, status_code
+
+    def get_published_series(self):
+        get_series_list = []
+        message = {"message": "No published series"}
+        status_code = 404
+        flag = False
+        try:
+            for x in self.series_coll.find():
+                if x["isPublished"]:
+                    flag = True
+                    temp_id = str(x["_id"])
+                    x["sid"] = temp_id
+                    del x["_id"]
+                    get_series_list.append(x)
+            if get_series_list:
+                status_code = 200
+            if not flag:
+                return message, 200
+        except Exception as e:
+            print(e)
+        return get_series_list, status_code

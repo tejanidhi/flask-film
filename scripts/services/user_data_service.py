@@ -264,4 +264,103 @@ def publish_unpublish_film():
         return jsonify(message), status
 
 
+@user_data_status.route("/addSeries", methods=["POST"])
+def add_series():
+    status = 404
+    message = {"message": "Error"}
+    if request.method == "POST":
+        try:
+            json_string = request.get_data()
+            if json_string:
+                json_obj = json.loads(json_string)
+                message, status = UserDetails().add_series(json_obj)
+        except Exception as e:
+            print(e)
+        return jsonify(message), status
 
+
+@user_data_status.route("/getSeries", methods=["GET"])
+def get_series():
+    final_json = {"message": "Error in Fetching"}
+    status_code = 404
+    if request.method == "GET":
+        try:
+            final_json, status_code = UserDetails().get_series()
+        except Exception as e:
+            print(e)
+        return jsonify(final_json), status_code
+
+
+@user_data_status.route("/addEpisode", methods=["POST"])
+def add_episode():
+    status = 404
+    message = {"message": "Error"}
+    if request.method == "POST":
+        try:
+            json_string = request.get_data()
+            if json_string:
+                json_obj = json.loads(json_string)
+                message, status = UserDetails().add_episode(json_obj)
+        except Exception as e:
+            print(e)
+        return jsonify(message), status
+
+
+@user_data_status.route("/removeEpisode", methods=["POST"])
+def remove_episode():
+    status = 404
+    message = {"message": "Error"}
+    if request.method == "POST":
+        try:
+            json_string = request.get_data()
+            if json_string:
+                json_obj = json.loads(json_string)
+                message, status = UserDetails().remove_episode(json_obj)
+        except Exception as e:
+            print(e)
+        return jsonify(message), status
+
+
+@user_data_status.route("/removeSeries", methods=["POST"])
+def remove_series():
+    status = 404
+    message = {"message": "Error"}
+    if request.method == "POST":
+        try:
+            json_string = request.get_data()
+            if json_string:
+                json_obj = json.loads(json_string)
+                message, status = UserDetails().remove_series(json_obj)
+        except Exception as e:
+            print(e)
+        return jsonify(message), status
+
+
+@user_data_status.route("/series/published/change", methods=["POST"])
+def publish_unpublish_series():
+    status = 404
+    message = {"message": "Error"}
+    if request.method == "POST":
+        try:
+            json_string = request.get_data()
+            if json_string:
+                json_obj = json.loads(json_string)
+                message, status = UserDetails().publish_unpublish_series(json_obj)
+        except Exception as e:
+            print(e)
+        return jsonify(message), status
+
+
+@user_data_status.route("/series/published", methods=["GET"])
+def get_published_series():
+    final_json = {"message": "Error in Fetching"}
+    status_code = 404
+    # header_api = None
+    if request.method == "GET":
+        try:
+            # if request.args['api_key']:
+            # header_api = request.args['api_key']
+            final_json, status_code = UserDetails().get_published_series()
+        except Exception as e:
+            print(e)
+        return jsonify(final_json), status_code
