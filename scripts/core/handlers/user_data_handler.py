@@ -593,7 +593,7 @@ class UserDetails:
         status_code = 404
         try:
             if "sid" in input_json and "isPublished" in input_json:
-                self.film_collec.update_one({"_id": ObjectId(input_json["sid"])},
+                self.series_coll.update_one({"_id": ObjectId(input_json["sid"])},
                                             {"$set": {"isPublished": input_json["isPublished"]}})
             if input_json["isPublished"]:
                 message["message"] = "Published Film"
