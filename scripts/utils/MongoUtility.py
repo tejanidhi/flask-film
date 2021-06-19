@@ -13,7 +13,7 @@ class MongoUtility:
         flag = False
         value = {}
         try:
-            for x in self.myclient[database_name] \
+            for x in self.myclient[database_name]\
                     [collection_name].find({"api_key": api_key}):
                 if x:
                     # del x["_id"]

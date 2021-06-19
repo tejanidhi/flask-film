@@ -82,9 +82,10 @@ def add_film_details():
     if request.method == "POST":
         try:
             json_string = request.get_data()
-            if json_string:
+            if json_string and request.args['api_key']:
+                header_api = request.args['api_key']
                 json_obj = json.loads(json_string)
-                message, status = UserDetails().insert_film_details(json_obj)
+                message, status = UserDetails().insert_film_details(json_obj, header_api)
         except Exception as e:
             print(e)
         return jsonify(message), status
@@ -96,7 +97,9 @@ def get_users():
     status_code = 404
     if request.method == "GET":
         try:
-            final_json, status_code = UserDetails().get_user_details()
+            if request.args['api_key']:
+                header_api = request.args['api_key']
+                final_json, status_code = UserDetails().get_user_details(header_api)
         except Exception as e:
             print(e)
         return jsonify(final_json), status_code
@@ -108,7 +111,9 @@ def get_purchased_users():
     status_code = 404
     if request.method == "GET":
         try:
-            final_json, status_code = UserDetails().get_purchased_user_details()
+            if request.args['api_key']:
+                header_api = request.args['api_key']
+                final_json, status_code = UserDetails().get_purchased_user_details(header_api)
         except Exception as e:
             print(e)
         return jsonify(final_json), status_code
@@ -121,9 +126,10 @@ def delete_film_details():
     if request.method == "POST":
         try:
             json_string = request.get_data()
-            if json_string:
+            if json_string and request.args['api_key']:
+                header_api = request.args['api_key']
                 json_obj = json.loads(json_string)
-                message, status = UserDetails().delete_film_details(json_obj)
+                message, status = UserDetails().delete_film_details(json_obj, header_api)
         except Exception as e:
             print(e)
         return jsonify(message), status
@@ -136,9 +142,10 @@ def edit_film_details():
     if request.method == "POST":
         try:
             json_string = request.get_data()
-            if json_string:
+            if json_string and request.args['api_key']:
+                header_api = request.args['api_key']
                 json_obj = json.loads(json_string)
-                message, status = UserDetails().edit_film_details(json_obj)
+                message, status = UserDetails().edit_film_details(json_obj, header_api)
         except Exception as e:
             print(e)
         return jsonify(message), status
@@ -151,10 +158,12 @@ def add_update():
     imagefile = None
     if request.method == "POST":
         try:
-            if 'imagefile' in request.files:
-                imagefile = request.files.get('imagefile', '')
-            imagefile.save(f'images/{imagefile.filename}')
-            message, status = UserDetails().add_update(imagefile)
+            if request.args['api_key']:
+                header_api = request.args['api_key']
+                if 'imagefile' in request.files:
+                    imagefile = request.files.get('imagefile', '')
+                imagefile.save(f'images/{imagefile.filename}')
+                message, status = UserDetails().add_update(imagefile, header_api)
         except Exception as e:
             print(e)
         return jsonify(message), status
@@ -166,7 +175,9 @@ def get_updates():
     status_code = 404
     if request.method == "GET":
         try:
-            final_json, status_code = UserDetails().get_updates()
+            if request.args['api_key']:
+                header_api = request.args['api_key']
+            final_json, status_code = UserDetails().get_updates(header_api)
         except Exception as e:
             print(e)
         return jsonify(final_json), status_code
@@ -179,9 +190,10 @@ def delete_update():
     if request.method == "POST":
         try:
             json_string = request.get_data()
-            if json_string:
+            if json_string and request.args['api_key']:
+                header_api = request.args['api_key']
                 json_obj = json.loads(json_string)
-                message, status = UserDetails().delete_update(json_obj)
+                message, status = UserDetails().delete_update(json_obj, header_api)
         except Exception as e:
             print(e)
         return jsonify(message), status
@@ -194,9 +206,10 @@ def add_cast_details():
     if request.method == "POST":
         try:
             json_string = request.get_data()
-            if json_string:
+            if json_string and request.args['api_key']:
+                header_api = request.args['api_key']
                 json_obj = json.loads(json_string)
-                message, status = UserDetails().add_cast_details(json_obj)
+                message, status = UserDetails().add_cast_details(json_obj, header_api)
         except Exception as e:
             print(e)
         return jsonify(message), status
@@ -209,9 +222,10 @@ def remove_cast_details():
     if request.method == "POST":
         try:
             json_string = request.get_data()
-            if json_string:
+            if json_string and request.args['api_key']:
+                header_api = request.args['api_key']
                 json_obj = json.loads(json_string)
-                message, status = UserDetails().remove_cast_details(json_obj)
+                message, status = UserDetails().remove_cast_details(json_obj, header_api)
         except Exception as e:
             print(e)
         return jsonify(message), status
@@ -256,9 +270,10 @@ def publish_unpublish_film():
     if request.method == "POST":
         try:
             json_string = request.get_data()
-            if json_string:
+            if json_string and request.args['api_key']:
+                header_api = request.args['api_key']
                 json_obj = json.loads(json_string)
-                message, status = UserDetails().publish_unpublish_film(json_obj)
+                message, status = UserDetails().publish_unpublish_film(json_obj, header_api)
         except Exception as e:
             print(e)
         return jsonify(message), status
@@ -271,9 +286,10 @@ def add_series():
     if request.method == "POST":
         try:
             json_string = request.get_data()
-            if json_string:
+            if json_string and request.args['api_key']:
+                header_api = request.args['api_key']
                 json_obj = json.loads(json_string)
-                message, status = UserDetails().add_series(json_obj)
+                message, status = UserDetails().add_series(json_obj, header_api)
         except Exception as e:
             print(e)
         return jsonify(message), status
@@ -285,7 +301,9 @@ def get_series():
     status_code = 404
     if request.method == "GET":
         try:
-            final_json, status_code = UserDetails().get_series()
+            if request.args['api_key']:
+                header_api = request.args['api_key']
+                final_json, status_code = UserDetails().get_series(header_api)
         except Exception as e:
             print(e)
         return jsonify(final_json), status_code
@@ -298,9 +316,10 @@ def add_episode():
     if request.method == "POST":
         try:
             json_string = request.get_data()
-            if json_string:
+            if json_string and request.args['api_key']:
+                header_api = request.args['api_key']
                 json_obj = json.loads(json_string)
-                message, status = UserDetails().add_episode(json_obj)
+                message, status = UserDetails().add_episode(json_obj, header_api)
         except Exception as e:
             print(e)
         return jsonify(message), status
@@ -313,9 +332,10 @@ def remove_episode():
     if request.method == "POST":
         try:
             json_string = request.get_data()
-            if json_string:
+            if json_string and request.args['api_key']:
+                header_api = request.args['api_key']
                 json_obj = json.loads(json_string)
-                message, status = UserDetails().remove_episode(json_obj)
+                message, status = UserDetails().remove_episode(json_obj, header_api)
         except Exception as e:
             print(e)
         return jsonify(message), status
@@ -328,9 +348,10 @@ def remove_series():
     if request.method == "POST":
         try:
             json_string = request.get_data()
-            if json_string:
+            if json_string and request.args['api_key']:
+                header_api = request.args['api_key']
                 json_obj = json.loads(json_string)
-                message, status = UserDetails().remove_series(json_obj)
+                message, status = UserDetails().remove_series(json_obj, header_api)
         except Exception as e:
             print(e)
         return jsonify(message), status
@@ -343,9 +364,10 @@ def publish_unpublish_series():
     if request.method == "POST":
         try:
             json_string = request.get_data()
-            if json_string:
+            if json_string and request.args['api_key']:
+                header_api = request.args['api_key']
                 json_obj = json.loads(json_string)
-                message, status = UserDetails().publish_unpublish_series(json_obj)
+                message, status = UserDetails().publish_unpublish_series(json_obj, header_api)
         except Exception as e:
             print(e)
         return jsonify(message), status
@@ -358,9 +380,24 @@ def get_published_series():
     # header_api = None
     if request.method == "GET":
         try:
-            # if request.args['api_key']:
-            # header_api = request.args['api_key']
-            final_json, status_code = UserDetails().get_published_series()
+            if request.args['api_key']:
+                header_api = request.args['api_key']
+                final_json, status_code = UserDetails().get_published_series(header_api)
+        except Exception as e:
+            print(e)
+        return jsonify(final_json), status_code
+
+
+@user_data_status.route("/filmsSeries", methods=["GET"])
+def get_series_and_films_sorted():
+    final_json = {"message": "Error in Fetching"}
+    status_code = 404
+    # header_api = None
+    if request.method == "GET":
+        try:
+            if request.args['api_key']:
+                header_api = request.args['api_key']
+                final_json, status_code = UserDetails().get_series_and_films_sorted(header_api)
         except Exception as e:
             print(e)
         return jsonify(final_json), status_code
