@@ -401,3 +401,19 @@ def get_series_and_films_sorted():
         except Exception as e:
             print(e)
         return jsonify(final_json), status_code
+
+
+@user_data_status.route("/orders", methods=["POST"])
+def razorpay_orders():
+    status = 404
+    message = {"message": "Error"}
+    if request.method == "POST":
+        try:
+            json_string = request.get_data()
+            if json_string and request.args['api_key']:
+                header_api = request.args['api_key']
+                json_obj = json.loads(json_string)
+                message, status = UserDetails().razorpay_orders(json_obj, header_api)
+        except Exception as e:
+            print(e)
+        return jsonify(message), status

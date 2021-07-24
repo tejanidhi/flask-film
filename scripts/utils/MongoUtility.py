@@ -18,8 +18,8 @@ class MongoUtility:
                 if x:
                     # del x["_id"]
                     flag = True
-                    # value = x
-                    value["id"] = x["id"]
+                    if "id" in x:
+                        value["id"] = x["id"]
         except Exception as e:
             print(e)
         return value, flag

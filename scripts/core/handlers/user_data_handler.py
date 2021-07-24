@@ -11,6 +11,7 @@ from boto3.s3.transfer import S3Transfer
 import os
 import uuid
 from PIL import Image
+import razorpay
 
 
 class UserDetails:
@@ -26,6 +27,7 @@ class UserDetails:
         self.cast_coll = self.mydb["cast_details"]
         self.events_coll = self.mydb["events"]
         self.series_coll = self.mydb["series"]
+        self.response_coll = self.mydb["order_response"]
         self.unique_id_list = []
         self.api_list = self.get_api_key_list("mydatabase", "user_data")
 
@@ -73,9 +75,8 @@ class UserDetails:
         try:
             if header_api_key in self.api_list:
                 film_details_list = []
-                film_id_json, api_status = MongoUtility().check_api_key(header_api_key, "mydatabase",
-                                                                        "user_purchase_details")
-                # print(film_id_json, "--")
+                # film_id_json, api_status = MongoUtility().check_api_key(header_api_key, "mydatabase",
+                #                                                         "user_purchase_details")
                 for x in self.myclient["mydatabase"]["film_details"].find():
                     # del x["_id"]
                     cast_details_list = []
@@ -89,15 +90,19 @@ class UserDetails:
                     x["cast_details"] = cast_details_list
                     del x["cast_ids"]
                     # print(film_id_json, str(x["_id"]))
-                    if film_id_json:
-                        if str(x["_id"]) in film_id_json["id"]:
-                            x["isPurchased"] = True
-                        else:
-                            x["isPurchased"] = False
-                    else:
-                        x["isPurchased"] = False
-                    if "isPublished" not in x:
-                        x["isPublished"] = False
+                    film_id_list = []
+                    # if film_id_json:
+                    #     for each_value in film_id_json["id"]:
+                    #         if "filmid" in each_value:
+                    #             film_id_list.append(each_value["filmid"])
+                    #     if str(x["_id"]) in film_id_list:
+                    #         x["isPurchased"] = True
+                    #     else:
+                    #         x["isPurchased"] = False
+                    # else:
+                    #     x["isPurchased"] = False
+                    # if "isPublished" not in x:
+                    #     x["isPublished"] = False
                     x["id"] = str(x["_id"])
                     del x["_id"]
                     film_details_list.append(x)
@@ -112,42 +117,144 @@ class UserDetails:
             print(e)
         return film_details_list, status_code
 
+    def series_ids_ids(self, database_name, collection_name):
+        series_ids = list()
+        try:
+            for x in self.myclient[database_name] \
+                    [collection_name].find():
+                series_ids.append(str(x["_id"]))
+        except Exception as e:
+            print(e)
+        return series_ids
+
     def insert_purchase_details(self, input_json, header_api):
         response_status = 404
         status_message = {"message": "Error"}
         try:
             # api_list = self.get_api_key_list("mydatabase", "user_data")
             film_ids_list = self.get_film_ids("mydatabase", "film_details")
+            series_ids_list = self.series_ids_ids("mydatabase", "series")
             final_json = {}
             if header_api in self.api_list:
                 message, status = MongoUtility().check_api_key(header_api, "mydatabase",
                                                                "user_purchase_details")
-                if input_json["id"] in film_ids_list:
-                    if status:
-                        new_message = {"api_key": header_api}
-                        final_json["api_key"] = header_api
-                        if input_json["id"] in message["id"]:
-                            response_status = 200
-                            status_message = {"message": "already purchased"}
-                        elif input_json["id"] not in message["id"]:
-                            message["id"].append(input_json["id"])
-                            final_json["id"] = message["id"]
-                            self.pur_details.update(new_message, final_json)
-                            status_message["message"] = "User Exists, added film"
+                purchased_id_list = []
+                # print(message, status)
+                if status:
+                    if "id" in message:
+                        for each_value in message["id"]:
+                            if "sid" in each_value:
+                                purchased_id_list.append(each_value["sid"])
+                            if "filmid" in each_value:
+                                purchased_id_list.append(each_value["filmid"])
+                # print(purchased_id_list)
+                if "filmid" in input_json:
+                    if input_json["filmid"] in film_ids_list:
+                        if status:
+                            new_message = {"api_key": header_api}
+                            final_json["api_key"] = header_api
+                            if input_json["filmid"] in purchased_id_list:
+                                response_status = 200
+                                status_message = {"message": "already purchased"}
+                            elif input_json["filmid"] not in purchased_id_list:
+                                if "razorpay_payment_id" in input_json and "razorpay_order_id" in input_json \
+                                        and "razorpay_signature" in input_json:
+                                    temp_json = {"filmid": input_json["filmid"],
+                                                 "razorpay_payment_id": input_json["razorpay_payment_id"],
+                                                 "razorpay_order_id": input_json["razorpay_order_id"],
+                                                 "razorpay_signature": input_json["razorpay_signature"]
+                                                 }
+                                    message["id"].append(temp_json)
+                                    final_json["id"] = message["id"]
+                                    self.pur_details.update(new_message, final_json)
+                                    status_message["message"] = "User Exists, added series"
+                                    for x in self.film_collec.find({"_id": ObjectId(input_json["filmid"])}):
+                                        x["isPurchased"] = True
+                                        self.film_collec.update({"_id": ObjectId(input_json["filmid"])}, x)
+
+                                else:
+                                    status_message["message"] = "Insufficient Input"
+                                    response_status = 404
+                        else:
+                            if input_json["filmid"] in film_ids_list:
+                                temp_json = {}
+                                temp_json["api_key"] = header_api
+                                if "razorpay_payment_id" in input_json and "razorpay_order_id" in input_json \
+                                        and "razorpay_signature" in input_json:
+                                    temp_json["id"] = [{"filmid": input_json["filmid"],
+                                                                           "razorpay_payment_id": input_json[
+                                                                               "razorpay_payment_id"],
+                                                                           "razorpay_order_id": input_json[
+                                                                               "razorpay_order_id"],
+                                                                           "razorpay_signature": input_json[
+                                                                               "razorpay_signature"]}]
+                                    self.pur_details.insert_one(temp_json)
+                                    status_message["message"] = "User Created, added payment details"
+                                    response_status = 200
+                                    for x in self.film_collec.find({"_id": ObjectId(input_json["filmid"])}):
+                                        x["isPurchased"] = True
+                                        self.film_collec.update({"_id": ObjectId(input_json["filmid"])}, x)
+                                else:
+                                    status_message["message"] = "Insufficient Input"
+                                    response_status = 404
                     else:
-                        if input_json["id"] in film_ids_list:
-                            input_json["id"] = [input_json["id"]]
-                            input_json["api_key"] = header_api
-                            self.pur_details.insert_one(input_json)
-                            status_message["message"] = "User Created"
-                            response_status = 200
-                else:
-                    status_message["message"] = "No Film Exists"
+                        status_message["message"] = "No Film Exists"
+                if "sid" in input_json:
+                    if input_json["sid"] in series_ids_list:
+                        if status:
+                            new_message = {"api_key": header_api}
+                            final_json["api_key"] = header_api
+                            if input_json["sid"] in purchased_id_list:
+                                response_status = 200
+                                status_message = {"message": "already purchased"}
+                            elif input_json["sid"] not in purchased_id_list:
+                                if "razorpay_payment_id" in input_json and "razorpay_order_id" in input_json \
+                                                                        and "razorpay_signature" in input_json:
+                                    temp_json = {"sid": input_json["sid"],
+                                                 "razorpay_payment_id": input_json["razorpay_payment_id"],
+                                                 "razorpay_order_id": input_json["razorpay_order_id"],
+                                                 "razorpay_signature": input_json["razorpay_signature"]
+                                                 }
+                                    message["id"].append(temp_json)
+                                    final_json["id"] = message["id"]
+                                    self.pur_details.update(new_message, final_json)
+                                    status_message["message"] = "User Exists, added series"
+                                    response_status = 200
+                                    for x in self.series_coll.find({"_id": ObjectId(input_json["sid"])}):
+                                        x["isPurchased"] = True
+                                        print(x)
+                                        self.series_coll.update({"_id": ObjectId(input_json["sid"])}, x)
+                                else:
+                                    status_message["message"] = "Insufficient Input"
+                                    response_status = 404
+                        else:
+                            if input_json["sid"] in series_ids_list:
+                                temp_json = {}
+                                temp_json["api_key"] = header_api
+                                if "razorpay_payment_id" in input_json and "razorpay_order_id" in input_json \
+                                    and "razorpay_signature" in input_json:
+                                    temp_json["id"] = [{"sid": input_json["sid"],
+                                                                "razorpay_payment_id": input_json["razorpay_payment_id"],
+                                                                "razorpay_order_id": input_json["razorpay_order_id"],
+                                                                "razorpay_signature": input_json["razorpay_signature"]}]
+                                    self.pur_details.insert_one(temp_json)
+                                    status_message["message"] = "User Created, added payment details"
+                                    response_status = 200
+                                    for x in self.series_coll.find({"_id": ObjectId(input_json["sid"])}):
+                                        x["isPurchased"] = True
+                                        print(x)
+                                        self.film_collec.update({"_id": ObjectId(input_json["sid"])}, x)
+                                else:
+                                    status_message["message"] = "Insufficient Input"
+                                    response_status = 404
+
+                    else:
+                        status_message["message"] = "No Series Exists"
             else:
                 status_message["message"] = "Invalid api"
         except Exception as e:
             print(e)
-            print(status_message, response_status)
+            # print(status_message, response_status)
         return status_message, response_status
 
     def get_film_ids(self, database_name, collection_name):
@@ -211,6 +318,7 @@ class UserDetails:
                     del input_json["cast"]
                     ts = calendar.timegm(time.gmtime())
                     input_json["created_date"] = ts
+                    input_json["isPurchased"] = False
                     self.film_collec.insert_one(input_json)
                     message["message"] = "Film details Inserted Successfully"
                     status = 200
@@ -551,6 +659,7 @@ class UserDetails:
                     out_json["image"] = input_json["image"]
                 ts = calendar.timegm(time.gmtime())
                 out_json["created_date"] = ts
+                out_json["isPurchased"] = False
                 if "episodes" in input_json:
                     for each_value in input_json["episodes"]:
                         get_uuid = self.create_unique_uuid(self.unique_id_list)
@@ -742,4 +851,52 @@ class UserDetails:
         except Exception as e:
             print(e)
         return new_films_series, status_code
+
+    def get_order_response_list(self):
+        response_list = []
+        try:
+            for x in self.response_coll.find():
+                response_list.append(x["receipt"])
+        except Exception as e:
+            print(e)
+        return response_list
+
+    def razorpay_orders(self, input_json, header_api):
+        message = {"message": "Unable to create order"}
+        status_code = 404
+        try:
+            if header_api in self.api_list:
+                client = razorpay.Client(auth=("rzp_live_KuxeaJ2PlY5Aco", "uvbmKmikoju8lhQb30vkKKRc"))
+                if "amount" in input_json and "currency" in input_json:
+                    order_amount = input_json["amount"]
+                    order_currency = input_json["currency"]
+                    get_unique_id_list = self.get_order_response_list()
+                    while True:
+                        get_uuid = str(uuid.uuid1())
+                        if get_uuid not in get_unique_id_list:
+                            break
+                        else:
+                            continue
+                    if "notes" in input_json:
+                        notes = input_json["notes"]
+                    else:
+                        notes = ""
+                    try:
+                        response = client.order.create(
+                            dict(amount=order_amount, currency=order_currency, receipt=get_uuid, notes=notes))
+                        if response:
+                            return response, 200
+                    except Exception as e:
+                        print(e)
+                else:
+                    message["message"] = "Insufficient Input"
+                    return message, status_code
+            else:
+                message["message"] = "Authentication Failed"
+                status_code = 401
+                return message, status_code
+        except Exception as e:
+            print(e)
+
+
 
