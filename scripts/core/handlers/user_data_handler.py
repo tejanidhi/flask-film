@@ -272,7 +272,7 @@ class UserDetails:
         flag = False
         get_order_id = ""
         try:
-            secret_key = bytes("uvbmKmikoju8lhQb30vkKKRc", 'utf-8')
+            secret_key = bytes("FnBRAaI6PERKay9z7vEwy1bA", 'utf-8')
             for x in self.response_coll.find({"receipt": recipt_id}):
                 get_order_id = x["id"]
             if get_order_id:
@@ -898,7 +898,7 @@ class UserDetails:
         response = ""
         try:
             if header_api in self.api_list:
-                client = razorpay.Client(auth=("rzp_live_KuxeaJ2PlY5Aco", "uvbmKmikoju8lhQb30vkKKRc"))
+                client = razorpay.Client(auth=("rzp_test_DEq3RRvdCTN6Lv", "FnBRAaI6PERKay9z7vEwy1bA"))
                 if "amount" in input_json and "currency" in input_json:
                     order_amount = input_json["amount"]
                     order_currency = input_json["currency"]
