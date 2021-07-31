@@ -167,7 +167,8 @@ class UserDetails:
                                     message["id"].append(temp_json)
                                     final_json["id"] = message["id"]
                                     self.pur_details.update(new_message, final_json)
-                                    status_message["message"] = "User Exists, added series"
+                                    status_message["message"] = "User Exists, added film"
+                                    response_status = 200
                                     for x in self.film_collec.find({"_id": ObjectId(input_json["filmid"])}):
                                         x["isPurchased"] = True
                                         self.film_collec.update({"_id": ObjectId(input_json["filmid"])}, x)
