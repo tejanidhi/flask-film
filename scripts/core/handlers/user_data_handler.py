@@ -909,13 +909,9 @@ class UserDetails:
                             break
                         else:
                             continue
-                    if "notes" in input_json:
-                        notes = input_json["notes"]
-                    else:
-                        notes = ""
                     try:
                         response = client.order.create(
-                            dict(amount=order_amount, currency=order_currency, receipt=get_uuid, notes=notes))
+                            dict(amount=order_amount, currency=order_currency, receipt=get_uuid))
                         if "id" in response:
                             self.response_coll.insert_one(response)
                         del response["_id"]
