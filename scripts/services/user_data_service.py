@@ -406,7 +406,7 @@ def get_series_and_films_sorted():
 @user_data_status.route("/orders", methods=["POST"])
 def razorpay_orders():
     status = 404
-    message = {"message": "Error"}
+    message = {"message": "Enter valid API"}
     if request.method == "POST":
         try:
             json_string = request.get_data()
@@ -417,3 +417,17 @@ def razorpay_orders():
         except Exception as e:
             print(e)
         return jsonify(message), status
+
+
+@user_data_status.route("/test_orders", methods=["POST"])
+def test_razorpay_orders():
+    message = ""
+    json_obj = ""
+    if request.method == "POST":
+        try:
+            json_string = request.get_data()
+            json_obj = json.loads(json_string)
+            message = UserDetails().test_razorpay_orders(json_obj)
+        except Exception as e:
+            print(e)
+        return jsonify(message)
