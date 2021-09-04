@@ -134,7 +134,6 @@ class UserDetails:
         response_status = 404
         status_message = {"message": "Error"}
         try:
-
             # api_list = self.get_api_key_list("mydatabase", "user_data")
             film_ids_list = self.get_film_ids("mydatabase", "film_details")
             series_ids_list = self.series_ids_ids("mydatabase", "series")
