@@ -419,15 +419,15 @@ def razorpay_orders():
         return jsonify(message), status
 
 
-@user_data_status.route("/test_orders", methods=["POST"])
-def test_razorpay_orders():
-    message = ""
-    json_obj = ""
-    if request.method == "POST":
-        try:
-            json_string = request.get_data()
-            json_obj = json.loads(json_string)
-            message = UserDetails().test_razorpay_orders(json_obj)
-        except Exception as e:
-            print(e)
-        return jsonify(message)
+# @user_data_status.route("/test_orders", methods=["POST"])
+# def test_razorpay_orders():
+#     message = ""
+#     json_obj = ""
+#     if request.method == "POST":
+#         try:
+#             json_string = request.get_data()
+#             json_obj = json.loads(json_string)
+#             message = UserDetails().test_razorpay_orders(json_obj)
+#         except Exception as e:
+#             print(e)
+#         return jsonify(message)

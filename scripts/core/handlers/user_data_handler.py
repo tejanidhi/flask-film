@@ -142,7 +142,7 @@ class UserDetails:
                 message, status = MongoUtility().check_api_key(header_api, "mydatabase",
                                                                "user_purchase_details")
                 if "filmid" in input_json or "sid" in input_json and \
-                        "razorpay_payment_id" in input_json and "razorpay_order_id" in input_json \
+                        "razorpay_payment_id" in input_json and "razorpay_receipt_id" in input_json \
                         and "razorpay_signature" in input_json:
                     if "filmid" in input_json:
                         if not input_json["filmid"]:
@@ -153,7 +153,7 @@ class UserDetails:
                             status_message["message"] = "sid shd not be empty"
                             return status_message, response_status
                     verify_signature = self.verify_payment(razorpay_payment_id=input_json["razorpay_payment_id"],
-                                                           order_id=input_json["razorpay_order_id"],
+                                                           receipt_id=input_json["razorpay_receipt_id"],
                                                            razorpay_payment_signature=input_json[
                                                                "razorpay_signature"]
                                                            )
@@ -177,11 +177,11 @@ class UserDetails:
                                         response_status = 200
                                         status_message = {"message": "already purchased"}
                                     elif input_json["filmid"] not in purchased_id_list:
-                                        if "razorpay_payment_id" in input_json and "razorpay_order_id" in input_json \
+                                        if "razorpay_payment_id" in input_json and "razorpay_receipt_id" in input_json \
                                                 and "razorpay_signature" in input_json:
                                             temp_json = {"filmid": input_json["filmid"],
                                                          "razorpay_payment_id": input_json["razorpay_payment_id"],
-                                                         "razorpay_order_id": input_json["razorpay_order_id"],
+                                                         "razorpay_receipt_id": input_json["razorpay_receipt_id"],
                                                          "razorpay_signature": input_json["razorpay_signature"]
                                                          }
                                             message["id"].append(temp_json)
@@ -200,13 +200,13 @@ class UserDetails:
                                     if input_json["filmid"] in film_ids_list:
                                         temp_json = {}
                                         temp_json["api_key"] = header_api
-                                        if "razorpay_payment_id" in input_json and "razorpay_order_id" in input_json \
+                                        if "razorpay_payment_id" in input_json and "razorpay_receipt_id" in input_json \
                                                 and "razorpay_signature" in input_json:
                                             temp_json["id"] = [{"filmid": input_json["filmid"],
                                                                 "razorpay_payment_id": input_json[
                                                                     "razorpay_payment_id"],
-                                                                "razorpay_order_id": input_json[
-                                                                    "razorpay_order_id"],
+                                                                "razorpay_receipt_id": input_json[
+                                                                    "razorpay_receipt_id"],
                                                                 "razorpay_signature": input_json[
                                                                     "razorpay_signature"]}]
                                             self.pur_details.insert_one(temp_json)
@@ -229,11 +229,11 @@ class UserDetails:
                                         response_status = 200
                                         status_message = {"message": "already purchased"}
                                     elif input_json["sid"] not in purchased_id_list:
-                                        if "razorpay_payment_id" in input_json and "razorpay_order_id" in input_json \
+                                        if "razorpay_payment_id" in input_json and "razorpay_receipt_id" in input_json \
                                                 and "razorpay_signature" in input_json:
                                             temp_json = {"sid": input_json["sid"],
                                                          "razorpay_payment_id": input_json["razorpay_payment_id"],
-                                                         "razorpay_order_id": input_json["razorpay_order_id"],
+                                                         "razorpay_receipt_id": input_json["razorpay_receipt_id"],
                                                          "razorpay_signature": input_json["razorpay_signature"]
                                                          }
                                             message["id"].append(temp_json)
@@ -252,12 +252,12 @@ class UserDetails:
                                     if input_json["sid"] in series_ids_list:
                                         temp_json = {}
                                         temp_json["api_key"] = header_api
-                                        if "razorpay_payment_id" in input_json and "razorpay_order_id" in input_json \
+                                        if "razorpay_payment_id" in input_json and "razorpay_receipt_id" in input_json \
                                                 and "razorpay_signature" in input_json:
                                             temp_json["id"] = [{"sid": input_json["sid"],
                                                                 "razorpay_payment_id": input_json[
                                                                     "razorpay_payment_id"],
-                                                                "razorpay_order_id": input_json[
+                                                                "razorpay_receipt_id": input_json[
                                                                     "razorpay_order_id"],
                                                                 "razorpay_signature": input_json[
                                                                     "razorpay_signature"]}]
@@ -288,12 +288,12 @@ class UserDetails:
         # print(status_message, response_status)
         return status_message, response_status
 
-    def verify_payment(self, razorpay_payment_id, order_id, razorpay_payment_signature):
+    def verify_payment(self, razorpay_payment_id, receipt_id, razorpay_payment_signature):
         flag = False
         get_order_id = ""
         params_dict = {}
         try:
-            for x in self.response_coll.find({"id": order_id}):
+            for x in self.response_coll.find({"receipt": receipt_id}):
                 get_order_id = x["id"]
             if get_order_id:
                 client = razorpay.Client(auth=("rzp_test_DEq3RRvdCTN6Lv", "FnBRAaI6PERKay9z7vEwy1bA"))
@@ -924,12 +924,20 @@ class UserDetails:
                     order_amount = input_json["amount"]
                     order_currency = input_json["currency"]
                     try:
+                        while True:
+                            get_uuid = str(uuid.uuid1())
+                            if get_uuid not in self.get_order_response_list():
+                                break
+                            else:
+                                continue
                         response = client.order.create(
                             dict(amount=order_amount, currency=order_currency))
-                        if "id" in response:
-                            self.response_coll.insert_one(response)
-                        del response["_id"]
-                        del response["notes"]
+                        if response:
+                            response["receipt"] = get_uuid
+                            if "id" in response:
+                                self.response_coll.insert_one(response)
+                            del response["_id"]
+                            del response["notes"]
                     except Exception as e:
                         print(e)
                 else:
@@ -943,15 +951,15 @@ class UserDetails:
             print(e)
         return response, 200
 
-    def test_razorpay_orders(self, input_json):
-        client = razorpay.Client(auth=("rzp_test_DEq3RRvdCTN6Lv", "FnBRAaI6PERKay9z7vEwy1bA"))
-        order_amount = input_json["amount"]
-        order_currency = input_json["currency"]
-        response = client.order.create(
-            dict(amount=order_amount, currency=order_currency))
-        return response
+    # def test_razorpay_orders(self, input_json):
+    #     client = razorpay.Client(auth=("rzp_test_DEq3RRvdCTN6Lv", "FnBRAaI6PERKay9z7vEwy1bA"))
+    #     order_amount = input_json["amount"]
+    #     order_currency = input_json["currency"]
+    #     response = client.order.create(
+    #         dict(amount=order_amount, currency=order_currency))
+    #     return response
 
 
-if __name__ == '__main__':
-    print(UserDetails().verify_payment("pay_29QQoUBi66xm2f", "order_9A33XWu170gUtm6",
-                                       "9ef4dffbfd84f1318f6739a3ce19f9d85851857ae648f114332d8401e0949a3d"))
+# if __name__ == '__main__':
+#     print(UserDetails().verify_payment("pay_29QQoUBi66xm2f", "order_9A33XWu170gUtm6",
+#                                        "9ef4dffbfd84f1318f6739a3ce19f9d85851857ae648f114332d8401e0949a3d"))
