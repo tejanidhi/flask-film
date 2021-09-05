@@ -295,6 +295,7 @@ class UserDetails:
         try:
             for x in self.response_coll.find({"receipt": receipt_id}):
                 get_order_id = x["id"]
+
             if get_order_id:
                 client = razorpay.Client(auth=("rzp_test_DEq3RRvdCTN6Lv", "FnBRAaI6PERKay9z7vEwy1bA"))
                 params_dict = {
